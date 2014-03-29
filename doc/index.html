@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Advanced QUnit - Front-end JavaScript unit testing</title>
+
+		<meta name="description" content="A framework for easily creating beautiful presentations using HTML">
+		<meta name="author" content="Hakim El Hattab">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<link rel="stylesheet" href="css/reveal.min.css">
+		<link rel="stylesheet" href="css/theme/default.css" id="theme">
+
+		<!-- For syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- If the query includes 'print-pdf', use the PDF print sheet -->
+		<script>
+			document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+
+        <style>
+            .reveal li {
+                margin-top: 10px;
+            }
+        </style>
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<section>
+					<h1>Advanced QUnit</h1>
+					<h3>Front-end JavaScript unit testing</h3>
+					<p>
+						<small><a href="http://www.zealake.com/consultants/lars-thorup/">Lars Thorup, ZeaLake</a> / <a href="http://twitter.com/larsthorup">@larsthorup</a></small>
+					</p>
+				</section>
+
+                <section>
+                    <h2>Who is Lars Thorup</h2>
+                    <ul>
+                        <li>Software developer/architect</li>
+                        <ul>
+                            <li>C#, C++ and JavaScript</li>
+                            <li>Test Driven Development</li>
+                        </ul>
+                        <li>Coach: Teaching agile and automated testing</li>
+                        <li>Advisor: Assesses software projects and companies</li>
+                        <li>Founder and CEO of ZeaLake</li>
+                    </ul>
+                    <img src="media/lars-thorup-2011-02-27.jpg"/>
+
+                </section>
+
+                <section>
+                    <h2>Agenda</h2>
+
+                    <ul>
+                        <li>Unit tests gives quality feedback</li>
+                        <ul>
+                            <li>Make them fast</li>
+                            <li>Make them precise</li>
+                        </ul>
+                        <li>Run thousands of unit tests in seconds</li>
+                        <li>We will look at</li>
+                        <ul>
+                            <li>Mocking techniques</li>
+                            <li>Front-end specific testing patterns</li>
+                        </ul>
+                        <li>Assuming knowledge about JavaScript and unit testing</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2>QUnit Basics</h2>
+
+                    <pre><code data-trim>
+module('util.calculator', {
+    setup: function () {
+        this.calc = new Calculator();
+    }
+});
+
+test('multiply', function () {
+    equal(this.calc.multiply(6, 7), 42, '6*7');
+});
+                    </code></pre>
+                </section>
+
+                <section>
+
+                    <section>
+                        <h2>Mocking, spying and stubbing</h2>
+                    </section>
+
+                    <section>
+                        <h2>What is hard to test in JavaScript?</h2>
+                    </section>
+
+                    <section>
+
+                        <h2>How to test in isolation?</h2>
+
+                        <ul>
+                            <li>We want to test code in isolation</li>
+                            <li>here the code is the 'keypress' event handler</li>
+                            <li>and isolation means not invoking the getMatch() method</li>
+                        </ul>
+
+                        <pre><code data-trim>
+'keypress': function (element, event) {
+    var pattern = this.element.val();
+    pattern += String.fromCharCode(event.charCode);
+    var match = this.getMatch(pattern);
+    if (match) {
+        event.preventDefault();
+        this.element.val(match);
+    }
+}
+                        </code></pre>
+
+                    </section>
+
+                    <section>
+
+                        <h2>Mocking methods</h2>
+
+                        <ul>
+                            <li>Using SinonJS</li>
+                            <li>We can mock the getMatch() method</li>
+                            <li>decide how the mock should behave</li>
+                            <li>verify that the mocked method was called correctly</li>
+                        </ul>
+
+                        <pre><code data-trim>
+sinon.stub(autoComplete, 'getMatch').returns('monique');
+
+$('#name').trigger($.Event('keypress', {charCode: 109}););
+
+ok(autoComplete.getMatch.calledWith('m'));
+
+equal($('#name').val(), 'monique');
+                        </code></pre>
+
+                    </section>
+
+                    <section>
+                        <h2>Mocking global functions</h2>
+
+                        <ul>
+                            <li>Global functions are properties of the window object</li>
+                        </ul>
+
+                        <pre><code data-trim>
+openPopup: function (url) {
+    var popup = window.open(url, '_blank', 'resizable');
+    popup.focus();
+}
+                        </code></pre>
+
+                        <pre><code data-trim>
+var popup;
+sinon.stub(window, 'open', function () {
+    popup = {
+        focus: sinon.spy()
+    };
+    return popup;
+});
+
+autoComplete.openPopup('zealake.com');
+
+ok(window.open.calledWith('zealake.com', '_blank', 'resizable'));
+
+ok(popup.focus.called, 'focus changed');
+                        </code></pre>
+                    </section>
+
+                    <section>
+                        <h2>Mocking constructors</h2>
+
+                        <ul>
+                            <li>Constructors are functions</li>
+                            <li>with <code>this</code> being the object to construct</li>
+                        </ul>
+
+                        <pre><code data-trim>
+this.input = new window.AutoComplete(inputElement, {
+    listUrl: this.options.listUrl
+});
+this.input.focus();
+                        </code></pre>
+
+                        <pre><code data-trim>
+sinon.stub(window, 'AutoComplete', function () {
+    this.focus = sinon.spy();
+});
+
+ok(form, 'created');
+equal(window.AutoComplete.callCount, 1);
+var args = window.AutoComplete.firstCall.call.args;
+ok(args[0].is('#name'));
+deepEqual(args[1], {listUrl: '/someUrl'});
+
+var autoComplete = window.AutoComplete.firstCall.call.thisValue;
+ok(autoComplete.focus.called);
+                        </code></pre>
+
+                    </section>
+
+                    <section>
+
+                        <h2>How to avoid waiting?</h2>
+
+                        <ul>
+                            <li>We want the tests to be fast</li>
+                            <li>So don't use Jasmine <code>waitsFor()</code></li>
+                            <li>But we often need to wait</li>
+                            <ul>
+                                <li>For animations to complete</li>
+                                <li>For AJAX responses to return</li>
+                            </ul>
+                        </ul>
+
+                        <pre><code data-trim>
+delayHide: function () {
+    var self = this;
+    setTimeout(function () {
+        self.element.hide();
+    }, this.options.hideDelay);
+}
+                        </code></pre>
+
+                    </section>
+
+                    <section>
+                        <h2>Mocking timers</h2>
+
+                        <ul>
+                            <li>Use Sinon's mock clock</li>
+                            <li>Tick the clock explicitly</li>
+                            <li>Now the test completes in milliseconds</li>
+                            <li>without waiting</li>
+                        </ul>
+
+                        <pre><code data-trim>
+sinon.useFakeTimers();
+
+autoComplete.delayHide();
+
+ok($('#name').is(':visible'));
+
+sinon.clock.tick(500);
+
+ok($('#name').is(':hidden'));
+                        </code></pre>
+
+                    </section>
+
+                    <section>
+                        <h2>Mocking time</h2>
+
+                        <ul>
+                            <li><code>new Date()</code> tends to return different values over time</li>
+                            <li>...actually, that's the whole point :)</li>
+                            <li>But how do we test code that relies on that?</li>
+                            <li>We cannot <code>equal</code> on a value that changes on every run</li>
+                            <li>Instead, Sinon can mock the <code>Date()</code> constructor!</li>
+                        </ul>
+
+                        <pre><code data-trim>
+sinon.useFakeTimers();
+var then = new Date();
+
+sinon.clock.tick(42000);
+var later = new Date();
+
+equal(later.getTime() - then.getTime(), 42000);
+                        </code></pre>
+
+                    </section>
+
+                    <section>
+                        <h2>Mocking AJAX requests</h2>
+
+                        <ul>
+                            <li>To test in isolation</li>
+                            <li>To vastly speed up the tests</li>
+                            <li>Many options</li>
+                            <ul>
+                                <li>can.fixture</li>
+                                <li>Mockjax</li>
+                                <li>Sinon</li>
+                            </ul>
+                        </ul>
+
+                        <pre><code data-trim>
+can.fixture('/getNames', function (original, respondWith) {
+    respondWith({list: ['rachel']});
+});
+var autoComplete = new AutoComplete('#name', {
+    listUrl: '/getNames'
+});
+sinon.clock.tick(can.fixture.delay);
+                        </code></pre>
+
+                        <pre><code data-trim>
+respondWith(500); // Internal server error
+                        </code></pre>
+
+                    </section>
+
+                    <section>
+                        <h2>DOM fixtures</h2>
+
+                        <ul>
+                            <li>Supply the markup required by the code</li>
+                            <li>Automatically cleanup markup after every test</li>
+                            <li>Built into QUnit as #qunit-fixture</li>
+                        </ul>
+
+                        <pre><code data-trim>
+$('<input id="name" />').appendTo('#qunit-fixture');
+
+autoComplete = new AutoComplete('#name');
+                        </code></pre>
+
+                    </section>
+
+                    <section>
+                        <h2>Spying on events</h2>
+
+                        <ul>
+                            <li>How do we test that an event was cancelled?</li>
+                            <li>Spy on the preventDefault() method</li>
+                        </ul>
+
+                        <pre><code data-trim>
+'keypress': function (element, event) {
+    var pattern = this.element.val() +
+                            String.fromCharCode(event.charCode);
+    var match = this.getMatch(pattern);
+    if(match) {
+        event.preventDefault();
+        this.element.val(match);
+    }
+}
+                        </code></pre>
+
+                        <pre><code data-trim>
+var keypressEvent = $.Event('keypress', {charCode: 109});
+sinon.spy(keypressEvent, 'preventDefault');
+
+$('#name').trigger(keypressEvent);
+
+ok(keypressEvent.preventDefault.called);
+                        </code></pre>
+
+                    </section>
+
+                    <section>
+                        <h2>Simulating CSS transitions</h2>
+                    </section>
+
+                </section>
+
+                <section>
+                    <h2>Paramerized and conditioned tests</h2>
+                    <ul>
+                        <li>Some code is browser specific</li>
+                        <ul>
+                            <li>maybe using a browser specific API</li>
+                            <li>and might only be testable in that browser</li>
+                        </ul>
+                        <li>Tests can be conditioned</li>
+                        <li>Or iterated...</li>
+                    </ul>
+                    <pre><code data-trim>
+can.each([
+    {desc: 'success', response: {list: ['x']}, expected: ['x']},
+    {desc: 'failure', response: 500, expected: []}
+], function (scenario) {
+    test('listUrl option, ' + scenario.desc, function () {
+        can.fixture('/getNames', function (original, respondWith) {
+            respondWith(scenario.response);
+        });
+        deepEqual(autoComplete.options.list, scenario.expected);
+    });
+});
+                    </code></pre>
+                </section>
+
+
+                <section>
+                    <section>
+                        <h2>Leak detection</h2>
+                    </section>
+
+                    <section>
+                        <h2>DOM element leaks</h2>
+
+                        <ul>
+                            <li>DOM Fixtures are cleaned up automatically</li>
+                            <li>But sometimes code needs to go beyond the fixture, appending to $('body'), e.g for overlays</li>
+                            <li>That code should have a way to clean up those elements</li>
+                            <li>And our tests should invoke that cleanup</li>
+                            <li>And we can easily verify that this is always done</li>
+                        </ul>
+
+                        <pre><code data-trim>
+teardown: function () {
+    var leaks = $('body').children(':not(#qunit-reporter)');
+    equal(leaks.length, 0, 'no DOM elements leaked');
+    leaks.remove();
+}
+                        </code></pre>
+                    </section>
+
+                    <section>
+                        <h2>Memory leaks</h2>
+
+                        <ul>
+                            <li>window.performance.memory: a Google Chrome extension</li>
+                            <li>run Chrome with --enable-memory-info --js-flags="--expose-gc"</li>
+                            <li>Collect memory consumption data for every test</li>
+                            <li>Sort and investigate the largest memory consumers</li>
+                            <li>However, performance data is not reproducible</li>
+                            <li>And the garbage collector disturbs the picture</li>
+                            <li>But still usable</li>
+                        </ul>
+
+                    <pre><code data-trim>
+setup: function () {
+    window.gc();
+    this.heapSizeBefore = window.performance.memory.usedJSHeapSize;
+},
+teardown: function () {
+    window.gc();
+    this.heapSizeAfter = window.performance.memory.usedJSHeapSize;
+    console.log(spec.heapSizeAfter - spec.heapSizeBefore);
+}
+                    </code></pre>
+
+                    </section>
+
+                </section>
+
+
+                <section>
+                    <h2>Resources</h2>
+                    <ul>
+                        <li><a href="https://github.com/larsthorup/qunit-demo-advanced">github.com/larsthorup/qunit-demo-advanced</a></li>
+                        <li><a href="https://twitter.com/larsthorup">@larsthorup</a></li>
+                        <li><a href="http://qunitjs.com/">qunitjs.com</a></li>
+                        <li><a href="http://sinonjs.com/">sinonjs.com</a></li>
+                        <li><a href="http://canjs.com/">canjs.com</a></li>
+                        <li><a href="https://github.com/hakimel/reveal.js">github.com/hakimel/reveal.js</a></li>
+                    </ul>
+                </section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.min.js"></script>
+
+		<script>
+
+			// Full list of configuration options available here:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+				transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+				// Optional libraries used to extend on reveal.js
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+					{ src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+					// { src: 'plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; } }
+					// { src: 'plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>

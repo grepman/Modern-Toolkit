@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+	<testsuite name="index" errors="0" failures="0" tests="1">
+		<testcase classname="index" name="util.calculator: multiply" assertions="1">
+		</testcase>
+	</testsuite>
+	<testsuite name="index" errors="0" failures="0" tests="1">
+		<testcase classname="index" name="date: mocking" assertions="1">
+		</testcase>
+	</testsuite>
+	<testsuite name="index" errors="0" failures="0" tests="5">
+		<testcase classname="index" name="autoComplete: keypress" assertions="3">
+		</testcase>
+		<testcase classname="index" name="autoComplete: openPopup" assertions="2">
+		</testcase>
+		<testcase classname="index" name="autoComplete: delayHide" assertions="2">
+		</testcase>
+		<testcase classname="index" name="autoComplete: listUrl option, success" assertions="1">
+		</testcase>
+		<testcase classname="index" name="autoComplete: listUrl option, failure" assertions="1">
+		</testcase>
+	</testsuite>
+	<testsuite name="index" errors="0" failures="0" tests="1">
+		<testcase classname="index" name="promptForm: construction" assertions="6">
+		</testcase>
+	</testsuite>
+	<testsuite name="index" errors="0" failures="0" tests="1">
+		<testcase classname="index" name="halloween: constructor" assertions="3">
+		</testcase>
+	</testsuite>
+</testsuites>
