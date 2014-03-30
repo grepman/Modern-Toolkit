@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <!DOCTYPE coverage SYSTEM "http://cobertura.sourceforge.net/xml/coverage-04.dtd">
-<coverage lines-valid="112"  lines-covered="104"  line-rate="0.9286"  branches-valid="8"  branches-covered="3"  branch-rate="0.375"  timestamp="1396078265983" complexity="0" version="0.1">
+<coverage lines-valid="112"  lines-covered="104"  line-rate="0.9286"  branches-valid="8"  branches-covered="3"  branch-rate="0.375"  timestamp="1396168360583" complexity="0" version="0.1">
 <sources>
 	<source>/Users/user/Toolkit</source>
 </sources>

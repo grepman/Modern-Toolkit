@@ -146,11 +146,11 @@
    <arg path="${project.basedir}/build/code-browser" />
   </exec>
  </target>
- 
+
  <target name="install" description="Prepare files and directories for Jenkins">
  	<mkdir dir="./build" />
  	<mkdir dir="./generatedJUnitFiles" />
- 	
+
  	<chown file="./build" user="jenkins.jenkins" />
  	<chown file="./generatedJUnitFiles" user="jenkins.jenkins" />
  </target>
