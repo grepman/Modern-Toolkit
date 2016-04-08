@@ -1,5 +1,5 @@
 {
-    "version": "0.1.1-1",
+    "version": "0.1.1",
     "description": "Demo of the latest Tools",
     "engine": "node 1.1.x",
     "dependencies" :{
